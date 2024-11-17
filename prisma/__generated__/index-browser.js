@@ -179,7 +179,7 @@ exports.TokenType = exports.$Enums.TokenType = {
 
 exports.UserRole = exports.$Enums.UserRole = {
   USER: 'USER',
-  ADMIn: 'ADMIn'
+  ADMIN: 'ADMIN'
 };
 
 exports.AuthMethod = exports.$Enums.AuthMethod = {

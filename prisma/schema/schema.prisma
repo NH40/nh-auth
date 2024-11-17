@@ -11,7 +11,7 @@ datasource db {
 
 enum UserRole {
   USER
-  ADMIn
+  ADMIN
 }
 
 enum AuthMethod {

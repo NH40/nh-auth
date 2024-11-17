@@ -1,3 +1,4 @@
+import { PrismaService } from '@/prisma/prisma.service'
 import { UserService } from '@/user/user.service'
 import {
 	ConflictException,
@@ -13,12 +14,15 @@ import { verify } from 'argon2'
 import { Request, Response } from 'express'
 import { LoginDto } from './dto/login.dto'
 import { RegisterDto } from './dto/register.dto'
+import { ProviderService } from './provider/provider.service'
 
 @Injectable()
 export class AuthService {
 	public constructor(
 		private readonly userService: UserService,
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly providerService: ProviderService,
+		private readonly prismaService: PrismaService
 	) {}
 
 	public async register(req: Request, dto: RegisterDto) {
@@ -62,6 +66,54 @@ export class AuthService {
 		return this.saveSession(req, user)
 	}
 
+	public async extractProfileFromCode(
+		req: Request,
+		provider: string,
+		code: string
+	) {
+		const providerInstance = this.providerService.findByService(provider)
+		const profile = await providerInstance.findUserByCode(code)
+
+		const account = await this.prismaService.account.findFirst({
+			where: {
+				id: profile.id,
+				provider: profile.provider,
+			},
+		})
+
+		let user = account?.userId
+			? await this.userService.findById(account.userId)
+			: null
+
+		if (user) {
+			return this.saveSession(req, user)
+		}
+
+		user = await this.userService.create(
+			profile.email,
+			'',
+			profile.name,
+			profile.picture,
+			AuthMethod[profile.provider.toUpperCase()],
+			true
+		)
+
+		if (!account) {
+			await this.prismaService.account.create({
+				data: {
+					userId: user.id,
+					type: 'oauth',
+					provider: profile.provider,
+					accessToken: profile.access_token,
+					refreshToken: profile.refresh_token,
+					expiresAt: profile.expires_at,
+				},
+			})
+		}
+
+		return this.saveSession(req, user)
+	}
+
 	public async logout(req: Request, res: Response): Promise<void> {
 		return new Promise((resolve, reject) => {
 			req.session.destroy(err => {
@@ -78,19 +130,20 @@ export class AuthService {
 		})
 	}
 
-	private async saveSession(req: Request, user: User) {
-		return new Promise((resolver, reject) => {
+	public async saveSession(req: Request, user: User) {
+		return new Promise((resolve, reject) => {
 			req.session.userId = user.id
+
 			req.session.save(err => {
 				if (err) {
 					return reject(
 						new InternalServerErrorException(
-							'Не удалось схоронить сессию. Проверьте, правильно ли настроены параметры сессии'
+							'Не удалось сохранить сессию. Проверьте, правильно ли настроены параметры сессии.'
 						)
 					)
 				}
 
-				resolver({
+				resolve({
 					user,
 				})
 			})

@@ -44,7 +44,7 @@ export type TokenType = (typeof TokenType)[keyof typeof TokenType]
 
 export const UserRole: {
   USER: 'USER',
-  ADMIn: 'ADMIn'
+  ADMIN: 'ADMIN'
 };
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]

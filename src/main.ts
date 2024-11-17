@@ -48,7 +48,6 @@ async function bootstrap() {
 		exposedHeaders: ['set-cookies'],
 	})
 
-	app.setGlobalPrefix('api')
 	await app.listen(config.getOrThrow<number>('APPLICATION_PORT'))
 }
 bootstrap()
