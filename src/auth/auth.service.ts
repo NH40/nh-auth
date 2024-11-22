@@ -1,5 +1,3 @@
-import { PrismaService } from '@/prisma/prisma.service'
-import { UserService } from '@/user/user.service'
 import {
 	ConflictException,
 	Injectable,
@@ -8,27 +6,32 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { AuthMethod } from '@prisma/__generated__'
-import { User } from '@prisma/__generated__/edge'
+import { AuthMethod, User } from '@prisma/__generated__'
 import { verify } from 'argon2'
 import { Request, Response } from 'express'
+
+import { PrismaService } from '@/prisma/prisma.service'
+import { UserService } from '@/user/user.service'
+
 import { LoginDto } from './dto/login.dto'
 import { RegisterDto } from './dto/register.dto'
+import { EmailConfirmationService } from './email-confirmation/email-confirmation.service'
 import { ProviderService } from './provider/provider.service'
 
 @Injectable()
 export class AuthService {
 	public constructor(
+		private readonly prismaService: PrismaService,
 		private readonly userService: UserService,
 		private readonly configService: ConfigService,
 		private readonly providerService: ProviderService,
-		private readonly prismaService: PrismaService
+		private readonly emailConfirmationService: EmailConfirmationService
 	) {}
 
 	public async register(req: Request, dto: RegisterDto) {
-		const isExist = await this.userService.findByEmail(dto.email)
+		const isExists = await this.userService.findByEmail(dto.email)
 
-		if (isExist) {
+		if (isExists) {
 			throw new ConflictException(
 				'Регистрация не удалась. Пользователь с таким email уже существует. Пожалуйста, используйте другой email или войдите в систему.'
 			)
@@ -43,7 +46,12 @@ export class AuthService {
 			false
 		)
 
-		return this.saveSession(req, newUser)
+		await this.emailConfirmationService.sendVerificationToken(newUser.email)
+
+		return {
+			message:
+				'Вы успешно зарегистрировались. Пожалуйста, подтвердите ваш email. Сообщение было отправлено на ваш почтовый адрес.',
+		}
 	}
 
 	public async login(req: Request, dto: LoginDto) {
@@ -62,6 +70,26 @@ export class AuthService {
 				'Неверный пароль. Пожалуйста, попробуйте еще раз или восстановите пароль, если забыли его.'
 			)
 		}
+
+		if (!user.isVerified) {
+			await this.emailConfirmationService.sendVerificationToken(user.email)
+			throw new UnauthorizedException(
+				'Ваш email не подтвержден. Пожалуйста, проверьте вашу почту и подтвердите адрес.'
+			)
+		}
+
+		// if (user.isTwoFactorEnabled) {
+		// 	if (!dto.code) {
+		// 		await this.twoFactorAuthService.sendTwoFactorToken(user.email)
+
+		// 		return {
+		// 			message:
+		// 				'Проверьте вашу почту. Требуется код двухфакторной аутентификации.'
+		// 		}
+		// 	}
+
+		// 	await this.twoFactorAuthService.validateTwoFactorToken(user.email)
+		// }
 
 		return this.saveSession(req, user)
 	}
