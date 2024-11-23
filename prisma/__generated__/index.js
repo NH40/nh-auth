@@ -173,7 +173,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\project\\NH-auth\\backend\\prisma\\__generated__",
+      "value": "C:\\Users\\imbov\\Downloads\\AyuGram Desktop\\NH-auth\\NH-auth\\backend\\prisma\\__generated__",
       "fromEnvVar": null
     },
     "config": {
@@ -189,7 +189,7 @@ const config = {
     "previewFeatures": [
       "prismaSchemaFolder"
     ],
-    "sourceFilePath": "C:\\project\\NH-auth\\backend\\prisma\\schema\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\imbov\\Downloads\\AyuGram Desktop\\NH-auth\\NH-auth\\backend\\prisma\\schema\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

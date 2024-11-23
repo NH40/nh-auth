@@ -10,6 +10,7 @@ import { UserService } from '@/user/user.service'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import { EmailConfirmationModule } from './email-confirmation/email-confirmation.module'
+import { PasswordRecoveryModule } from './password-recovery/password-recovery.module'
 import { ProviderModule } from './provider/provider.module'
 
 @Module({
@@ -25,6 +26,7 @@ import { ProviderModule } from './provider/provider.module'
 			inject: [ConfigService],
 		}),
 		forwardRef(() => EmailConfirmationModule),
+		PasswordRecoveryModule,
 	],
 	controllers: [AuthController],
 	providers: [AuthService, UserService, MailService],
