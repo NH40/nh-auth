@@ -17,6 +17,7 @@ import { LoginDto } from './dto/login.dto'
 import { RegisterDto } from './dto/register.dto'
 import { EmailConfirmationService } from './email-confirmation/email-confirmation.service'
 import { ProviderService } from './provider/provider.service'
+import { TwoFactorAuthService } from './two-factor-auth/two-factor-auth.service'
 
 @Injectable()
 export class AuthService {
@@ -25,7 +26,8 @@ export class AuthService {
 		private readonly userService: UserService,
 		private readonly configService: ConfigService,
 		private readonly providerService: ProviderService,
-		private readonly emailConfirmationService: EmailConfirmationService
+		private readonly emailConfirmationService: EmailConfirmationService,
+		private readonly twoFactorAuthService: TwoFactorAuthService
 	) {}
 
 	public async register(req: Request, dto: RegisterDto) {
@@ -78,18 +80,21 @@ export class AuthService {
 			)
 		}
 
-		// if (user.isTwoFactorEnabled) {
-		// 	if (!dto.code) {
-		// 		await this.twoFactorAuthService.sendTwoFactorToken(user.email)
+		if (user.isTwoFactorEnabled) {
+			if (!dto.code) {
+				await this.twoFactorAuthService.sendTwoFactorToken(user.email)
 
-		// 		return {
-		// 			message:
-		// 				'Проверьте вашу почту. Требуется код двухфакторной аутентификации.'
-		// 		}
-		// 	}
+				return {
+					message:
+						'Проверьте вашу почту. Требуется код двухфакторной аутентификации в течении 10 минут.',
+				}
+			}
 
-		// 	await this.twoFactorAuthService.validateTwoFactorToken(user.email)
-		// }
+			await this.twoFactorAuthService.validateTwoFactorToken(
+				user.email,
+				dto.code
+			)
+		}
 
 		return this.saveSession(req, user)
 	}

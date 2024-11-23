@@ -12,6 +12,7 @@ import { AuthService } from './auth.service'
 import { EmailConfirmationModule } from './email-confirmation/email-confirmation.module'
 import { PasswordRecoveryModule } from './password-recovery/password-recovery.module'
 import { ProviderModule } from './provider/provider.module'
+import { TwoFactorAuthService } from './two-factor-auth/two-factor-auth.service'
 
 @Module({
 	imports: [
@@ -29,7 +30,7 @@ import { ProviderModule } from './provider/provider.module'
 		PasswordRecoveryModule,
 	],
 	controllers: [AuthController],
-	providers: [AuthService, UserService, MailService],
+	providers: [AuthService, UserService, MailService, TwoFactorAuthService],
 	exports: [AuthService],
 })
 export class AuthModule {}
